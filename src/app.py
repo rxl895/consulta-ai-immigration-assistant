@@ -25,9 +25,10 @@ def load_retriever():
 retriever = load_retriever()
 
 llm = HuggingFaceHub(
-    repo_id="google/flan-t5-xl",  # ✅ Hosted & supports inference
+    repo_id="HuggingFaceH4/zephyr-7b-beta",
     model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
 )
+
 
 
 
