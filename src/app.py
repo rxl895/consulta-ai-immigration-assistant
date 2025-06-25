@@ -6,7 +6,7 @@ from langchain.llms import HuggingFaceHub
 from dotenv import load_dotenv
 import os
 
-# Load environment variables (.env with HUGGINGFACEHUB_API_TOKEN)
+# Load Hugging Face token from .env
 load_dotenv()
 
 # Streamlit UI setup
@@ -14,7 +14,7 @@ st.set_page_config(page_title="Immigration AI Assistant", layout="centered")
 st.title("🧠 Immigration AI Assistant 🇺🇸")
 st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official USCIS sources.")
 
-# Load FAISS index and embeddings
+# Load FAISS vector store and embeddings
 @st.cache_resource
 def load_retriever():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -24,16 +24,16 @@ def load_retriever():
 
 retriever = load_retriever()
 
-# Load the Hugging Face model for answering questions
+# Use a hosted Hugging Face model that supports inference
 llm = HuggingFaceHub(
-    repo_id="google/flan-t5-small",  # You can replace this with other small models
+    repo_id="google/flan-t5-base",  # ✅ Model that supports HF API inference
     model_kwargs={"temperature": 0.5, "max_length": 200}
 )
 
-# Create the QA chain using retrieval
+# Create the QA chain
 qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
-# Input box for user's question
+# Input field for user question
 query = st.text_input("❓ Your question:")
 if query:
     with st.spinner("Generating response..."):
