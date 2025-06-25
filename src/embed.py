@@ -1,9 +1,9 @@
 # src/embed.py
 
 import os
-from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.embeddings import HuggingFaceEmbeddings
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,11 +19,13 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 docs = text_splitter.create_documents([raw_text])
 
-# Step 2: Embed and index
-embeddings = OpenAIEmbeddings()
+# Step 2: Use FREE HuggingFace embeddings
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+
+# Step 3: Create FAISS index
 db = FAISS.from_documents(docs, embeddings)
 
-# Step 3: Save vector DB locally
+# Step 4: Save vector DB locally
 db.save_local("data/uscis_faiss_index")
 
-print("✅ Text embedded and saved to data/uscis_faiss_index")
+print("✅ Text embedded using HuggingFace and saved to data/uscis_faiss_index")
