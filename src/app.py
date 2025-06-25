@@ -26,9 +26,10 @@ retriever = load_retriever()
 
 # Use a hosted Hugging Face model that supports inference
 llm = HuggingFaceHub(
-    repo_id="google/flan-t5-base",  # ✅ Model that supports HF API inference
-    model_kwargs={"temperature": 0.5, "max_length": 200}
+    repo_id="tiiuae/falcon-rw-1b",
+    model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
 )
+
 
 # Create the QA chain
 qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
