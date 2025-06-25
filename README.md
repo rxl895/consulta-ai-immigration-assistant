@@ -50,3 +50,84 @@ consulta-ai-immigration-assistant/
 ├── .env                         # Hugging Face / OpenAI API keys (not committed)
 ├── requirements.txt             # Python dependencies
 └── README.md                    # Project overview
+
+
+🔧 Setup Instructions
+1. Clone the Repository
+bash
+Copy
+Edit
+git clone https://github.com/rxl895/consulta-ai-immigration-assistant.git
+cd consulta-ai-immigration-assistant
+2. Install Python Dependencies
+bash
+Copy
+Edit
+pip install -r requirements.txt
+3. Set Environment Variables
+Create a .env file:
+
+bash
+Copy
+Edit
+touch .env
+Paste your Hugging Face API token inside:
+
+env
+Copy
+Edit
+HUGGINGFACEHUB_API_TOKEN=your_huggingface_token_here
+🔐 Never commit this file. It’s already included in .gitignore.
+
+4. Run the Full Pipeline
+Step 1: Scrape USCIS Content
+bash
+Copy
+Edit
+python3 src/ingest.py
+Step 2: Embed the Content with Sentence Transformers
+bash
+Copy
+Edit
+python3 src/embed.py
+Step 3: Run the Chatbot Interface
+bash
+Copy
+Edit
+streamlit run src/app.py
+Visit the generated localhost link to chat with your AI Assistant.
+
+💬 Example Questions
+“How to apply for an H1B visa?”
+
+“What documents do I need for OPT?”
+
+“What is I-130 used for?”
+
+“How to change visa status inside the U.S.?”
+
+🧠 Powered By
+LangChain for chaining and context injection
+
+FAISS for similarity search over USCIS content
+
+HuggingFaceHub for hosted open LLMs (e.g. Zephyr)
+
+Streamlit for interactive front-end
+
+BeautifulSoup for scraping USCIS.gov content
+
+📌 Future Improvements
+ Add citation links for retrieved USCIS content
+
+ Multilingual support (Spanish, Hindi)
+
+ Add user feedback for answer helpfulness
+
+ Public deployment on HuggingFace Spaces
+
+ Add token usage monitoring and cost display
+
+✨ Credits
+Created with ❤️ by Ritika Lamba
+Inspired by Consulta’s mission to revolutionize immigration 
