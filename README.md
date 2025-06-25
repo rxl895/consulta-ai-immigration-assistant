@@ -34,24 +34,6 @@ A working prototype of an AI-powered assistant that answers U.S. immigration-rel
 
 ---
 
-## 📦 Project Structure
-
-```bash
-consulta-ai-immigration-assistant/
-├── data/                        # Stores scraped content & FAISS index
-│   ├── uscis_content.txt        # Raw USCIS content
-│   └── uscis_faiss_index/       # Saved FAISS vector database
-├── docs/                        # Assets for README/demo
-│   └── README_assets/           # Screenshots or GIFs
-├── src/
-│   ├── app.py                   # Streamlit frontend & QA pipeline
-│   ├── ingest.py                # Web scraper for USCIS site
-│   └── embed.py                 # Embeds scraped data into FAISS index
-├── .env                         # Hugging Face / OpenAI API keys (not committed)
-├── requirements.txt             # Python dependencies
-└── README.md                    # Project overview
-
-
 🔧 Setup Instructions
 1. Clone the Repository
 bash
