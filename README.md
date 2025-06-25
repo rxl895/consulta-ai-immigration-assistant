@@ -34,7 +34,7 @@ A working prototype of an AI-powered assistant that answers U.S. immigration-rel
 
 ---
 
-🔧 Setup Instructions
+## 🔧 Setup Instructions
 1. Clone the Repository
 bash
 Copy
@@ -79,7 +79,7 @@ Edit
 streamlit run src/app.py
 Visit the generated localhost link to chat with your AI Assistant.
 
-💬 Example Questions
+## 💬 Example Questions
 “How to apply for an H1B visa?”
 
 “What documents do I need for OPT?”
@@ -88,7 +88,7 @@ Visit the generated localhost link to chat with your AI Assistant.
 
 “How to change visa status inside the U.S.?”
 
-🧠 Powered By
+## 🧠 Powered By
 LangChain for chaining and context injection
 
 FAISS for similarity search over USCIS content
@@ -99,7 +99,7 @@ Streamlit for interactive front-end
 
 BeautifulSoup for scraping USCIS.gov content
 
-📌 Future Improvements
+## 📌 Future Improvements
  Add citation links for retrieved USCIS content
 
  Multilingual support (Spanish, Hindi)
@@ -110,6 +110,24 @@ BeautifulSoup for scraping USCIS.gov content
 
  Add token usage monitoring and cost display
 
-✨ Credits
+## ✨ Credits
 Created with ❤️ by Ritika Lamba
 Inspired by Consulta’s mission to revolutionize immigration 
+
+## 📦 Project Structure
+
+```bash
+consulta-ai-immigration-assistant/
+├── data/                        # Stores scraped content & FAISS index
+│   ├── uscis_content.txt        # Raw USCIS content
+│   └── uscis_faiss_index/       # Saved FAISS vector database
+├── docs/                        # Assets for README/demo
+│   └── README_assets/           # Screenshots or GIFs
+├── src/
+│   ├── app.py                   # Streamlit frontend & QA pipeline
+│   ├── ingest.py                # Web scraper for USCIS site
+│   └── embed.py                 # Embeds scraped data into FAISS index
+├── .env                         # Hugging Face / OpenAI API keys (not committed)
+├── requirements.txt             # Python dependencies
+└── README.md                    # Project overview
+
