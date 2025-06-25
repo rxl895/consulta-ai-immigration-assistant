@@ -1,40 +1,38 @@
 import streamlit as st
-from langchain.llms import OpenAI
 from langchain.chains import RetrievalQA
-from langchain.vectorstores import FAISS
-from langchain.embeddings import OpenAIEmbeddings
+from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
+from langchain.llms import HuggingFaceHub  # or use ChatOpenAI if you want to mix
 from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
+# Load environment variables (if any)
 load_dotenv()
 
-# Streamlit UI setup
+# UI setup
 st.set_page_config(page_title="Immigration AI Assistant", layout="centered")
 st.title("🧠 Immigration AI Assistant 🇺🇸")
-st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official sources like USCIS.")
+st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official USCIS sources.")
 
-# Validate API key
-if not os.getenv("OPENAI_API_KEY"):
-    st.error("❌ Missing OpenAI API key. Please set `OPENAI_API_KEY` in your .env file.")
-    st.stop()
-
-# Load FAISS index and embeddings
+# Load FAISS index and retriever
 @st.cache_resource
 def load_retriever():
-    embeddings = OpenAIEmbeddings()
-    db = FAISS.load_local(
-        "data/uscis_faiss_index",
-        embeddings,
-        allow_dangerous_deserialization=True  # <-- Important fix
-    )
+    embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+    db = FAISS.load_local("data/uscis_faiss_index", embeddings, allow_dangerous_deserialization=True)
     retriever = db.as_retriever()
     return retriever
 
 retriever = load_retriever()
-qa_chain = RetrievalQA.from_chain_type(llm=OpenAI(), retriever=retriever)
 
-# Input field
+# You can plug in any open-source model here via HuggingFaceHub or local LLM
+llm = HuggingFaceHub(
+    repo_id="google/flan-t5-small",
+    model_kwargs={"temperature": 0.5, "max_length": 200}
+)
+
+qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+
+# User input
 query = st.text_input("❓ Your question:")
 if query:
     with st.spinner("Generating response..."):
