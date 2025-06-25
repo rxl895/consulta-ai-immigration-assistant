@@ -1,9 +1,9 @@
 # src/embed.py
 
 import os
+from langchain_community.embeddings import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -27,4 +27,3 @@ db = FAISS.from_documents(docs, embeddings)
 db.save_local("data/uscis_faiss_index")
 
 print("✅ Text embedded and saved to data/uscis_faiss_index")
-
