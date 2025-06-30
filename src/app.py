@@ -6,7 +6,7 @@ from langchain.llms import HuggingFaceHub
 from dotenv import load_dotenv
 import os
 
-# Load Hugging Face token from .env
+# Load environment variables
 load_dotenv()
 
 # Streamlit UI setup
@@ -14,51 +14,38 @@ st.set_page_config(page_title="Immigration AI Assistant", layout="centered")
 st.title("🧠 Immigration AI Assistant 🇺🇸")
 st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official USCIS sources.")
 
-# Load FAISS vector store and embeddings
+# Sidebar for model selection
+model_choice = st.sidebar.selectbox(
+    "Choose LLM backend:",
+    ["HuggingFaceH4/zephyr-7b-beta", "google/flan-t5-base"]
+)
+
+st.sidebar.markdown(f"🔍 Using model: `{model_choice}`")
+
+# Load FAISS vector store and retriever
 @st.cache_resource
 def load_retriever():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
     db = FAISS.load_local("data/uscis_faiss_index", embeddings, allow_dangerous_deserialization=True)
-    retriever = db.as_retriever()
-    return retriever
+    return db.as_retriever()
 
 retriever = load_retriever()
 
-# Load Hugging Face model
+# Load selected model
 llm = HuggingFaceHub(
-    repo_id="HuggingFaceH4/zephyr-7b-beta",
+    repo_id=model_choice,
     model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
 )
 
-# Create the QA chain
+# QA chain setup
 qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
-# Input field
+# Main input
 query = st.text_input("❓ Your question:")
-
 if query:
     with st.spinner("Generating response..."):
-        # Get relevant documents
-        docs = retriever.get_relevant_documents(query)
-
-        # Generate response using the chain
-        response = qa_chain.combine_documents_chain.run(input_documents=docs, question=query)
+        response = qa_chain.run(query)
         st.success(response)
 
-        # Show source documents
-        st.markdown("#### 📄 Sources used:")
-        for i, doc in enumerate(docs):
-            content_preview = doc.page_content.strip().replace("\n", " ")
-            st.markdown(f"**Chunk {i+1}:** {content_preview[:300]}{'...' if len(content_preview) > 300 else ''}")
-
-        # Feedback section
-        st.markdown("#### 🙋 Was this helpful?")
-        col1, col2 = st.columns(2)
-        with col1:
-            if st.button("👍 Yes", key="yes_feedback"):
-                st.success("Thanks for your feedback!")
-                st.session_state.setdefault("feedback_log", []).append({"query": query, "feedback": "yes"})
-        with col2:
-            if st.button("👎 No", key="no_feedback"):
-                st.warning("Thanks — your feedback helps us improve.")
-                st.session_state.setdefault("feedback_log", []).append({"query": query, "feedback": "no"})
+        # Optional: show which model was used
+        st.caption(f"🧠 Powered by: `{model_choice}`")
