@@ -19,11 +19,12 @@ st.markdown("Ask any U.S. immigration question and get an AI-generated response,
 model_choice = st.sidebar.selectbox(
     "Choose LLM backend:",
     [
-        "HuggingFaceH4/zephyr-7b-beta",
-        "mistralai/Mistral-7B-Instruct-v0.1",
-        "microsoft/phi-2"
+        "google/flan-t5-base",  # ✅ FREE
+        "google/flan-t5-small",  # ✅ FREE
+        "mistralai/Mistral-7B-Instruct-v0.1"  # ⚠️ Might also require PRO
     ]
 )
+
 st.sidebar.markdown(f"🔍 Using model: `{model_choice}`")
 
 # Load retriever with cache
