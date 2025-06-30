@@ -35,16 +35,21 @@ def load_retriever():
 
 retriever = load_retriever()
 
-# Custom prompt
-custom_prompt = PromptTemplate.from_template("""
-You are an immigration assistant. Use the following context to answer the user's question.
-If the answer is not found in the context, just say you don't know. Do not make up an answer.
-
-{context}
+# Custom prompt for better answers
+custom_prompt = PromptTemplate(
+    template="""You are an AI assistant. Answer the question using ONLY the provided context. 
+If the answer cannot be found, say "I don't know".
 
 Question: {question}
-Answer:
-""")
+
+Context:
+{context}
+
+Answer:""",
+    input_variables=["context", "question"],
+)
+
+qa_chain = load_qa_with_sources_chain(llm=llm, chain_type="stuff", prompt=custom_prompt)
 
 # Load model
 llm = HuggingFaceHub(
