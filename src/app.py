@@ -6,7 +6,7 @@ from langchain.llms import HuggingFaceHub
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
+# Load environment variables from .env
 load_dotenv()
 
 # Streamlit UI setup
@@ -14,7 +14,7 @@ st.set_page_config(page_title="Immigration AI Assistant", layout="centered")
 st.title("🧠 Immigration AI Assistant 🇺🇸")
 st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official USCIS sources.")
 
-# Sidebar for model selection
+# Sidebar: Model selection
 model_choice = st.sidebar.selectbox(
     "Choose LLM backend:",
     [
@@ -23,10 +23,9 @@ model_choice = st.sidebar.selectbox(
         "microsoft/phi-2"
     ]
 )
-
 st.sidebar.markdown(f"🔍 Using model: `{model_choice}`")
 
-# Load FAISS vector store and retriever
+# Load FAISS retriever with cached embedding
 @st.cache_resource
 def load_retriever():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -44,12 +43,14 @@ llm = HuggingFaceHub(
 # QA chain setup
 qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
-# Main input
+# User input
 query = st.text_input("❓ Your question:")
 if query:
     with st.spinner("Generating response..."):
-        response = qa_chain.run(query)
-        st.success(response)
-
-        # Optional: show which model was used
-        st.caption(f"🧠 Powered by: `{model_choice}`")
+        try:
+            response = qa_chain.run(query)
+            st.success(response)
+            st.caption(f"🧠 Powered by: `{model_choice}`")
+        except Exception as e:
+            st.error("⚠️ The selected model failed to generate a response. Try switching models.")
+            st.exception(e)
