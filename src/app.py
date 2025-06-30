@@ -1,33 +1,33 @@
 import streamlit as st
 from langchain.chains import RetrievalQAWithSourcesChain
-from langchain.prompts import PromptTemplate
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.llms import HuggingFaceHub
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
+# Load API keys from .env
 load_dotenv()
 
-# Streamlit setup
+# Streamlit UI setup
 st.set_page_config(page_title="Immigration AI Assistant", layout="centered")
 st.title("🧠 Immigration AI Assistant 🇺🇸")
 st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official USCIS sources.")
 
-# Sidebar model selector
+# Sidebar: LLM model selector
 model_choice = st.sidebar.selectbox(
     "Choose LLM backend:",
     [
-        "google/flan-t5-base",  # ✅ FREE
-        "google/flan-t5-small",  # ✅ FREE
-        "mistralai/Mistral-7B-Instruct-v0.1"  # ⚠️ Might also require PRO
-    ]
+        "google/flan-t5-base",  # ✅ Free
+        "google/flan-t5-small",  # ✅ Free
+        "HuggingFaceH4/zephyr-7b-beta",  # ⚠️ Paid
+        "mistralai/Mistral-7B-Instruct-v0.1"  # ⚠️ Paid
+    ],
+    index=0  # default to free model
 )
-
 st.sidebar.markdown(f"🔍 Using model: `{model_choice}`")
 
-# Load retriever with cache
+# Load FAISS retriever
 @st.cache_resource
 def load_retriever():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -36,37 +36,26 @@ def load_retriever():
 
 retriever = load_retriever()
 
-# Load selected LLM
-llm = HuggingFaceHub(
-    repo_id=model_choice,
-    model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
-)
+# Load LLM with fallback
+def load_llm(repo_id):
+    try:
+        return HuggingFaceHub(
+            repo_id=repo_id,
+            model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
+        )
+    except Exception as e:
+        st.warning(f"⚠️ Failed to load `{repo_id}`. Falling back to `google/flan-t5-base`.")
+        return HuggingFaceHub(
+            repo_id="google/flan-t5-base",
+            model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
+        )
 
-# Custom prompt compatible with 'summaries' input
-custom_prompt = PromptTemplate(
-    template="""
-You are an AI assistant. Answer the question using ONLY the provided summaries.
-If the answer cannot be found in the summaries, say "I don't know".
+llm = load_llm(model_choice)
 
-Question: {question}
+# QA chain with source doc support
+qa_chain = RetrievalQAWithSourcesChain.from_chain_type(llm=llm, retriever=retriever)
 
-Summaries:
-{summaries}
-
-Answer:
-""",
-    input_variables=["summaries", "question"]
-)
-
-# Setup QA chain
-qa_chain = RetrievalQAWithSourcesChain.from_chain_type(
-    llm=llm,
-    retriever=retriever,
-    chain_type="stuff",
-    chain_type_kwargs={"prompt": custom_prompt}
-)
-
-# User input
+# Main input
 query = st.text_input("❓ Your question:")
 if query:
     with st.spinner("Generating response..."):
@@ -85,7 +74,7 @@ if query:
 
             st.caption(f"🧠 Powered by: `{model_choice}`")
 
-            # Feedback section
+            # Feedback
             st.markdown("---")
             st.markdown("🐵 **Was this helpful?**")
             col1, col2 = st.columns(2)
