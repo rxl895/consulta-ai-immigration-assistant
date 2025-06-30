@@ -1,20 +1,21 @@
 import streamlit as st
-from langchain.chains import RetrievalQAWithSourcesChain
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.llms import HuggingFaceHub
+from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 import os
 
-# Load .env for API keys
+# Load environment variables
 load_dotenv()
 
-# Streamlit setup
+# Streamlit UI setup
 st.set_page_config(page_title="Immigration AI Assistant", layout="centered")
 st.title("🧠 Immigration AI Assistant 🇺🇸")
 st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official USCIS sources.")
 
-# Sidebar: LLM selection
+# Sidebar model selection
 model_choice = st.sidebar.selectbox(
     "Choose LLM backend:",
     [
@@ -25,7 +26,7 @@ model_choice = st.sidebar.selectbox(
 )
 st.sidebar.markdown(f"🔍 Using model: `{model_choice}`")
 
-# Load retriever with embeddings
+# Load retriever
 @st.cache_resource
 def load_retriever():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -34,35 +35,46 @@ def load_retriever():
 
 retriever = load_retriever()
 
-# Load selected LLM
+# Custom prompt
+custom_prompt = PromptTemplate.from_template("""
+You are an immigration assistant. Use the following context to answer the user's question.
+If the answer is not found in the context, just say you don't know. Do not make up an answer.
+
+{context}
+
+Question: {question}
+Answer:
+""")
+
+# Load model
 llm = HuggingFaceHub(
     repo_id=model_choice,
     model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
 )
 
-# Setup QA chain with sources
-qa_chain = RetrievalQAWithSourcesChain.from_chain_type(llm=llm, retriever=retriever)
+# Chain with custom prompt
+qa_chain = load_qa_with_sources_chain(llm=llm, chain_type="stuff", prompt=custom_prompt)
 
-# User query
+# Input box
 query = st.text_input("❓ Your question:")
 if query:
     with st.spinner("Generating response..."):
         try:
-            result = qa_chain(query)
-            answer = result.get("answer", "Sorry, I couldn't find an answer.")
-            sources = result.get("sources", "")
+            docs = retriever.get_relevant_documents(query)
+            result = qa_chain({"input_documents": docs, "question": query})
 
             st.markdown("### 🤖 Answer")
-            st.success(answer)
+            st.success(result["answer"])
 
-            if sources:
+            # Show sources
+            if result.get("sources"):
                 st.markdown("### 📄 Sources used:")
-                for idx, chunk in enumerate(sources.split(","), start=1):
+                for idx, chunk in enumerate(result["sources"].split(","), start=1):
                     st.markdown(f"**Chunk {idx}:** {chunk.strip()}")
 
             st.caption(f"🧠 Powered by: `{model_choice}`")
 
-            # Feedback widget
+            # Feedback section
             st.markdown("---")
             st.markdown("🐵 **Was this helpful?**")
             col1, col2 = st.columns(2)
