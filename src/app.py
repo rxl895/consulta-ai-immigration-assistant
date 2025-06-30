@@ -17,7 +17,11 @@ st.markdown("Ask any U.S. immigration question and get an AI-generated response,
 # Sidebar for model selection
 model_choice = st.sidebar.selectbox(
     "Choose LLM backend:",
-    ["HuggingFaceH4/zephyr-7b-beta", "google/flan-t5-base"]
+    [
+        "HuggingFaceH4/zephyr-7b-beta",
+        "mistralai/Mistral-7B-Instruct-v0.1",
+        "microsoft/phi-2"
+    ]
 )
 
 st.sidebar.markdown(f"🔍 Using model: `{model_choice}`")
