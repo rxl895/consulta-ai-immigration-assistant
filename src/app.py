@@ -1,13 +1,13 @@
 import streamlit as st
-from langchain.chains.qa_with_sources.loading import load_qa_with_sources_chain
+from langchain.chains import RetrievalQAWithSourcesChain
+from langchain.prompts import PromptTemplate
 from langchain.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.llms import HuggingFaceHub
-from langchain.prompts import PromptTemplate
 from dotenv import load_dotenv
 import os
 
-# Load .env for API keys
+# Load environment variables
 load_dotenv()
 
 # Streamlit setup
@@ -15,7 +15,7 @@ st.set_page_config(page_title="Immigration AI Assistant", layout="centered")
 st.title("🧠 Immigration AI Assistant 🇺🇸")
 st.markdown("Ask any U.S. immigration question and get an AI-generated response, powered by official USCIS sources.")
 
-# Sidebar: LLM selection
+# Sidebar model selector
 model_choice = st.sidebar.selectbox(
     "Choose LLM backend:",
     [
@@ -26,7 +26,7 @@ model_choice = st.sidebar.selectbox(
 )
 st.sidebar.markdown(f"🔍 Using model: `{model_choice}`")
 
-# Load retriever with embeddings
+# Load retriever with cache
 @st.cache_resource
 def load_retriever():
     embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
@@ -41,31 +41,36 @@ llm = HuggingFaceHub(
     model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
 )
 
-# Define custom prompt
+# Custom prompt compatible with 'summaries' input
 custom_prompt = PromptTemplate(
     template="""
-You are an AI assistant. Answer the question using ONLY the provided context.
-If the answer cannot be found in the context, say "I don't know".
+You are an AI assistant. Answer the question using ONLY the provided summaries.
+If the answer cannot be found in the summaries, say "I don't know".
 
 Question: {question}
 
-Context:
-{context}
+Summaries:
+{summaries}
 
 Answer:
 """,
-    input_variables=["context", "question"]
+    input_variables=["summaries", "question"]
 )
 
-# Create QA chain using the custom prompt
-qa_chain = load_qa_with_sources_chain(llm=llm, chain_type="stuff", prompt=custom_prompt)
+# Setup QA chain
+qa_chain = RetrievalQAWithSourcesChain.from_chain_type(
+    llm=llm,
+    retriever=retriever,
+    chain_type="stuff",
+    chain_type_kwargs={"prompt": custom_prompt}
+)
 
-# Input field
+# User input
 query = st.text_input("❓ Your question:")
 if query:
     with st.spinner("Generating response..."):
         try:
-            result = qa_chain({"question": query, "input_documents": retriever.get_relevant_documents(query)})
+            result = qa_chain(query)
             answer = result.get("answer", "Sorry, I couldn't find an answer.")
             sources = result.get("sources", "")
 
@@ -79,7 +84,7 @@ if query:
 
             st.caption(f"🧠 Powered by: `{model_choice}`")
 
-            # Feedback widget
+            # Feedback section
             st.markdown("---")
             st.markdown("🐵 **Was this helpful?**")
             col1, col2 = st.columns(2)
