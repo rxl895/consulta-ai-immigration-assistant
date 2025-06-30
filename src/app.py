@@ -24,20 +24,28 @@ def load_retriever():
 
 retriever = load_retriever()
 
+# Hugging Face LLM setup (Zephyr 7B or similar)
 llm = HuggingFaceHub(
     repo_id="HuggingFaceH4/zephyr-7b-beta",
     model_kwargs={"temperature": 0.5, "max_new_tokens": 200}
 )
 
-
-
-
-# Create the QA chain
+# QA chain using LangChain
 qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
 
-# Input field for user question
+# Input box for user's question
 query = st.text_input("❓ Your question:")
 if query:
     with st.spinner("Generating response..."):
-        response = qa_chain.run(query)
+        # Retrieve relevant documents
+        docs = retriever.get_relevant_documents(query)
+
+        # Generate answer using retrieved documents
+        response = qa_chain.combine_documents_chain.run(input_documents=docs, question=query)
         st.success(response)
+
+        # Display retrieved source snippets
+        st.markdown("#### 📄 Sources used:")
+        for i, doc in enumerate(docs):
+            content_preview = doc.page_content.strip().replace("\n", " ")
+            st.markdown(f"**Chunk {i+1}:** {content_preview[:300]}{'...' if len(content_preview) > 300 else ''}")
